@@ -1,12 +1,12 @@
 import mongoose, { Schema, Document } from "mongoose";
 
-export interface IJob extends Document {
+export interface IJob extends Document{
   company: string;
   role: string;
   status: "interview" | "declined" | "pending";
-  appliedDate: Date;
-  notes: string;
-  user: Schema.Types.ObjectId;
+  appliedDate?: Date;
+  notes?: string;
+  user: mongoose.Types.ObjectId;
 }
 
 const jobSchema = new Schema<IJob>(
