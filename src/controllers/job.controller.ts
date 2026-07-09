@@ -16,15 +16,13 @@ import type { AuthRequest } from "../middleware/auth.middleware.js";
 export async function setJob(req: AuthRequest, res: Response): Promise<void> {
     try {
         const {company, role, status, notes } = req.body;
-        if(!company || !role || !status) {
-            res.status(400).json({ message: "Company, role, and status are required." });
-            return;
-        }
         const userId = req.user?.userId;
+
         if(!userId) {
-            res.status(401).json({ message: "Unauthorized" });
+            res.status(401).json({ success: false, message: "Unauthorized" });
             return;
         }
+
         const jobData = {
             company,
             role,
@@ -33,12 +31,17 @@ export async function setJob(req: AuthRequest, res: Response): Promise<void> {
             appliedDate: new Date(),
             user: new mongoose.Types.ObjectId(userId)
         };
+        
         const job = await Job.create(jobData);
-        await setCachedJob(job._id.toString(), job);
-        res.status(201).json(job);
+
+        await invalidateJobListCache();
+        res.status(201).json({
+            success: true,
+            job
+        });
     } catch (error) {
         console.error("Error creating job:", error);
-        res.status(500).json({ message: "Internal server error" });
+        res.status(500).json({ success: false, message: "Internal server error" });
     }
 }
 
@@ -48,13 +51,14 @@ export async function getJob(req: AuthRequest, res: Response): Promise<void> {
         const userId = req.user?.userId;
 
         if(!userId) {
-            res.status(401).json({ message: "Unauthorized" });
+            res.status(401).json({ success: false, message: "Unauthorized" });
             return;
         }
 
         const cachedJob = await getCachedJob(jobId);
         if(cachedJob) {
             res.status(200).json({
+                success: true,
                 source: "cache",
                 job: cachedJob
             });
@@ -64,18 +68,20 @@ export async function getJob(req: AuthRequest, res: Response): Promise<void> {
         const job = await Job.findOne({ _id: jobId, user: userId});
         if(!job) {
             res.status(404).json({
+                success: false,
                 message: "Job not found"
             });
             return;
         }
         await setCachedJob(jobId, job);
         res.status(200).json({
+            success: true,
             source: "database",
             job: job
         });
     } catch (error) {
         console.error("Error fetching job:", error);
-        res.status(500).json({ message: "Internal server error" });
+        res.status(500).json({ success: false, message: "Internal server error" });
     }
 }
 
@@ -86,13 +92,14 @@ export async function getJobList(req: AuthRequest, res: Response): Promise<void>
         const limit = parseInt(req.query.limit as string) || 10;
 
         if(!userId) {
-            res.status(401).json({ message: "Unauthorized" });
+            res.status(401).json({ success: false, message: "Unauthorized" });
             return;
         }
 
         const cachedJobList = await getCachedJobList(page , limit);
         if(cachedJobList) {
             res.status(200).json({
+                success: true,
                 source: "cache",
                 jobs: cachedJobList
             });
@@ -107,13 +114,14 @@ export async function getJobList(req: AuthRequest, res: Response): Promise<void>
 
         await setCachedJobList(page, limit, jobs);
         res.status(200).json({
+            success: true,
             source: "database",
             jobs: jobs,
             total: total
         });
     } catch (error) {
         console.error("Error fetching job list:", error);
-        res.status(500).json({ message: "Internal server error" });
+        res.status(500).json({ success: false, message: "Internal server error" });
     }
 }
 
@@ -123,7 +131,7 @@ export async function updateJob(req: AuthRequest, res: Response): Promise<void> 
         const userId = req.user?.userId as string;
 
         if(!userId) {
-            res.status(401).json({ message: "Unauthorized" });
+            res.status(401).json({ success: false, message: "Unauthorized" });
             return;
         }
 
@@ -134,7 +142,10 @@ export async function updateJob(req: AuthRequest, res: Response): Promise<void> 
         );
 
         if(!updateJob) {
-            res.status(404).json({ message: "Job not found" });
+            res.status(404).json({ 
+                success: false,
+                message: "Job not found" 
+            });
             return;
         }
 
@@ -144,12 +155,13 @@ export async function updateJob(req: AuthRequest, res: Response): Promise<void> 
         ]);
 
         res.status(200).json({
+            success: true,
             message: "Job updated successfully",
             job: updateJob
         });
     } catch (error) {
         console.error("Error updating job:", error);
-        res.status(500).json({ message: "Internal server error" });
+        res.status(500).json({ success: false, message: "Internal server error" });
     }
 }
 
@@ -159,13 +171,16 @@ export async function deleteJob(req: AuthRequest, res: Response): Promise<void> 
         const userId = req.user?.userId as string;
 
         if(!userId) {
-            res.status(401).json({ message: "Unauthorized" });
+            res.status(401).json({ success: false, message: "Unauthorized" });
             return;
         }
 
         const deleteJob = await Job.findOneAndDelete({ _id: jobId, user: userId });
         if(!deleteJob) {
-            res.status(404).json({ message: "Job not found" });
+            res.status(404).json({ 
+                success: false,
+                message: "Job not found" 
+            });
             return;
         }
 
@@ -175,10 +190,11 @@ export async function deleteJob(req: AuthRequest, res: Response): Promise<void> 
         ]);
 
         res.status(200).json({
+            success: true,
             message: "Job deleted successfully"
         });
     } catch (error) {
         console.error("Error deleting job:", error);
-        res.status(500).json({ message: "Internal server error" });
+        res.status(500).json({ success: false, message: "Internal server error" });
     }
 }

@@ -16,14 +16,11 @@ function generateToken(userId: string, email: string): string {
 export async function register(req: Request, res: Response): Promise<void> {
     try {
         const { name, email, password } = req.body;
-        if(!name || !email || !password) {
-            res.status(400).json({ message: "Name, email, and password are required." });
-            return;
-        }
 
         const existingUser = await User.findOne({ email });
         if(existingUser) {
             res.status(400).json({
+                success: false,
                 message: "User already exists"
             });
             return;
@@ -33,6 +30,7 @@ export async function register(req: Request, res: Response): Promise<void> {
         const token = generateToken(user._id.toString(), user.email);
 
         res.status(201).json({ 
+            success: true,
             message: "User registered successfully",
             token,
             user: {
@@ -43,7 +41,7 @@ export async function register(req: Request, res: Response): Promise<void> {
         });
     } catch (error) {
         console.error("Error during registration:", error);
-        res.status(500).json({ message: "Internal server error" });
+        res.status(500).json({ success: false, message: "Internal server error" });
     }
 }
 
@@ -52,14 +50,11 @@ export async function register(req: Request, res: Response): Promise<void> {
 export async function login(req: Request, res: Response): Promise<void> {
     try {
         const { email, password } = req.body;
-        if(!email || !password) {
-            res.status(400).json({ message: "Email and password are required." });
-            return;
-        }
 
         const user = await User.findOne({ email });
         if(!user) {
             res.status(400).json({
+                success: false,
                 message: "Invalid Credentials"
             });
             return;
@@ -68,6 +63,7 @@ export async function login(req: Request, res: Response): Promise<void> {
         const isMatch = await user.comparePassword(password);
         if(!isMatch) {
             res.status(400).json({
+                success: false,
                 message: "Invalid Credentials"
             });
             return;
@@ -75,6 +71,7 @@ export async function login(req: Request, res: Response): Promise<void> {
 
         const token = generateToken(user._id.toString(), user.email);
         res.status(200).json({
+            success: true,
             message: "Login successful",
             token,
             user: {
@@ -85,7 +82,7 @@ export async function login(req: Request, res: Response): Promise<void> {
         });
     } catch (error) {
         console.error("Error during login:", error);
-        res.status(500).json({ message: "Internal server error" });
+        res.status(500).json({ success: false, message: "Internal server error" });
     }
 }
 
@@ -94,16 +91,17 @@ export async function logout(req: AuthRequest, res: Response): Promise<void> {
     try {
         const token = req.headers.authorization?.split(" ")[1];
         if(!token) {
-            res.status(400).json({ message: "Token is required for logout." });
+            res.status(400).json({ success: false, message: "Token is required for logout." });
             return;
         }
         await redisClient.setex(`blacklist:${token}`, BLACKLIST_TTL, "true");
         
         res.status(200).json({
+            success: true,
             message: "Logout successfully"
         });
     } catch (error) {
         console.error("Error during logout:", error);
-        res.status(500).json({ message: "Internal server error" });
+        res.status(500).json({ success: false, message: "Internal server error" });
     }
 }
