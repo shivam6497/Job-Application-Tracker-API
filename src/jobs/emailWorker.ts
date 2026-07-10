@@ -1,5 +1,5 @@
 import { Worker } from "bullmq";
-import bullmqRedis from "../config/redis.js";
+import { bullmqRedis } from "../config/redis.js";
 import resend from "../config/mailer.js";
 import dotenv from "dotenv";
 
@@ -12,7 +12,7 @@ const emailWorker = new Worker(
 
     const { data, error } = await resend.emails.send({
       from: process.env.RESEND_FROM!,
-      to: email,
+      to: "kdmboy6397@gmail.com",
       subject: `Follow up — ${role} at ${company}`,
       html: `
         <h2>Hey! 👋</h2>

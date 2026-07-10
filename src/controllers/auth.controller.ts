@@ -3,8 +3,11 @@ import type { Request, Response } from "express";
 import { User } from "../models/user.model.js";
 import redisClient from "../config/redis.js";
 import type { AuthRequest } from "../middleware/auth.middleware.js";
+import dotenv from "dotenv";
 
-const JWT_SECRET = process.env.JWT_SECRET as string;
+dotenv.config();
+
+const JWT_SECRET = process.env.JWT_SECRET_KEY as string;
 const JWT_EXPIRES_IN = "24h";
 const BLACKLIST_TTL = 60 * 60 * 24;
 

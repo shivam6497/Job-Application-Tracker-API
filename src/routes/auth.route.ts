@@ -7,8 +7,18 @@ import rateLimiter from "../middleware/rateLimiter.middleware.js";
 
 const router = Router();
 
-router.post("/register", rateLimiter, validate(registerSchema), register);
-router.post("/login", rateLimiter, validate(loginSchema), login);
+router.post(
+  "/register",
+  rateLimiter({ maxRequests: 10, windowMs: 60}),
+  validate(registerSchema),
+  register,
+);
+router.post(
+  "/login",
+  rateLimiter({ maxRequests: 10, windowMs: 60 }),
+  validate(loginSchema),
+  login,
+);
 router.post("/logout", authMiddleware, logout);
 
 export default router;

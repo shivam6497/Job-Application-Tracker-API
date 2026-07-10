@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-import redisClient from "../config/redis.js";
 import {
   getCachedJob,
   setCachedJob,

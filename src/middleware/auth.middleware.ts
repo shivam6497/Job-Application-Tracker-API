@@ -1,6 +1,9 @@
 import type { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import redisClient from "../config/redis.js";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 export interface AuthRequest extends Request {
     user?: {
@@ -26,7 +29,7 @@ export async function authMiddleware(req: AuthRequest, res: Response, next: Next
         });
     }
 
-    const secret = process.env.JWT_SECRET as string;
+    const secret = process.env.JWT_SECRET_KEY as string;
 
     const decoded = jwt.verify(token, secret) as unknown as { userId: string; email: string };
     req.user = decoded;

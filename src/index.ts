@@ -1,11 +1,13 @@
-import express from "express";
 import dotenv from "dotenv";
+dotenv.config();
+
+import express from "express";
 import connectDB from "./config/db.js";
 import authRoutes from "./routes/auth.route.js";
 import jobRoutes from "./routes/job.route.js";
 import "./jobs/emailWorker.js";
 
-dotenv.config();
+
 const PORT = Number(process.env.PORT);
 
 const app = express();
