@@ -138,7 +138,7 @@ Request body:
 {
   "company": "Google",
   "role": "Frontend Developer",
-  "status": "pending",
+  "status": "interview",
   "notes": "Applied through referral"
 }
 ```
