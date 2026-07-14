@@ -11,9 +11,6 @@ async function seed() {
   await mongoose.connect(process.env.DATABASE_URL!);
   console.log("Connected");
 
-  await Job.deleteMany({});
-console.log("Cleared existing jobs");
-
   const jobs = [];
   for (let i = 0; i < 50000; i++) {
     jobs.push({
