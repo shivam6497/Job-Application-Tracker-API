@@ -1,49 +1,64 @@
-
-import redisClient from "../config/redis.js";
 import type { Request, Response, NextFunction } from "express";
+import redis from "../config/redis.js";
 
-const WISHLIST_IP: string[] = ["127.0.0.1", "::1"];
+const WHITELIST: string[] = ["127.0.0.1", "::1"];
 
 interface RateLimitOptions {
   maxRequests: number;
-  windowMs: number;
+  windowInSeconds: number;
 }
 
-const rateLimiter = (options: RateLimitOptions) => {
+const rateLimiter = (options: RateLimitOptions, name: string) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     const ip = req.ip;
-    const normalizeip = ip === "::1" ? "127.0.0.1" : ip;
+    const normalizedIp = ip === "::1" ? "127.0.0.1" : ip;
 
-    if (WISHLIST_IP.includes(normalizeip as unknown as string)) {
+    if (WHITELIST.includes(normalizedIp as string)) {
+      console.log(`IP ${normalizedIp} is whitelisted. Skipping rate limiting.`);
       next();
       return;
     }
 
-    const key = `rate-limit:${normalizeip}`;
-    const requests = await redisClient.incr(key);
+    const key = `rate_limit:${name}:${normalizedIp}`;
+    const now = Date.now();
+    const windowStart = now - options.windowInSeconds * 1000;
 
-    if (requests === 1) {
-      await redisClient.expire(key, options.windowMs);
-    }
+    const pipeline = redis.pipeline();
 
-    const ttl = await redisClient.ttl(key);
+    pipeline.zremrangebyscore(key, 0, windowStart);
+
+    pipeline.zcard(key);
+
+    pipeline.zadd(key, now, now.toString());
+
+    pipeline.expire(key, options.windowInSeconds);
+
+    const results = await pipeline.exec();
+
+    const requestCount = (results?.[1]?.[1] as number) ?? 0;
+
+    const remaining = Math.max(options.maxRequests - requestCount - 1, 0);
+    const resetTime = now + options.windowInSeconds * 1000;
 
     res.setHeader("X-RateLimit-Limit", options.maxRequests.toString());
-    res.setHeader(
-      "X-RateLimit-Remaining",
-      Math.max(options.maxRequests - requests, 0).toString(),
-    );
+    res.setHeader("X-RateLimit-Remaining", remaining.toString());
+    res.setHeader("X-RateLimit-Reset", resetTime.toString());
 
-    res.setHeader("Retry-After", ttl);
+    if (requestCount >= options.maxRequests) {
 
-    if(requests > options.maxRequests) {
-        return res.status(429).json({
-            success: false,
-            message: "Too many requests, please try again later.",
-            retryAfter: ttl,
-            limit: options.maxRequests,
-            requestMade: requests   
-        });
+      const oldestRequest = await redis.zrange(key, 0, 0, "WITHSCORES");
+      const oldestTimestamp = oldestRequest[1] ? parseInt(oldestRequest[1]) : now;
+      const retryAfter = Math.ceil((oldestTimestamp + options.windowInSeconds * 1000 - now) / 1000);
+
+      res.setHeader("Retry-After", retryAfter.toString());
+      res.status(429).json({
+        success: false,
+        message: "Too many requests. Please try again later.",
+        retryAfter,
+        requestMade: requestCount,
+        limit: options.maxRequests,
+      });
+      return;
     }
 
     next();
