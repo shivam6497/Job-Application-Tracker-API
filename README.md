@@ -63,9 +63,10 @@ RESEND_FROM=
 
 ## Scripts
 
-- `npm run dev` - builds TypeScript and starts the server from `dist/index.js`
+- `npm run dev` - builds TypeScript and starts the server from `dist/server.js`
 - `npm run build` - compiles TypeScript to `dist`
 - `npm start` - runs the compiled server
+- `npm test` - runs the Jest test suite
 
 ## Project Structure
 
@@ -80,15 +81,17 @@ src/
   routes/
   validators/
   index.ts
+  server.ts
 ```
 
 ## API Overview
 
-Base URL: `/api`
+Base URL: `/api/v1`
 
 ### Auth Routes
 
-#### `POST /api/auth/register`
+#### `POST /api/v1/auth/register`
+
 Registers a new user.
 
 Request body:
@@ -106,7 +109,8 @@ Response:
 - Returns a JWT token
 - Returns the created user details
 
-#### `POST /api/auth/login`
+#### `POST /api/v1/auth/login`
+
 Logs in an existing user.
 
 Request body:
@@ -118,7 +122,8 @@ Request body:
 }
 ```
 
-#### `POST /api/auth/logout`
+#### `POST /api/v1/auth/logout`
+
 Logs out the current user by blacklisting the token.
 
 Requires:
@@ -129,7 +134,8 @@ Requires:
 
 All job routes require authentication.
 
-#### `POST /api/jobs`
+#### `POST /api/v1/jobs`
+
 Creates a new job application.
 
 Request body:
@@ -149,21 +155,35 @@ Valid `status` values:
 - `interview`
 - `declined`
 
-#### `GET /api/jobs?page=1&limit=10`
+#### `GET /api/v1/jobs?page=1&limit=10`
+
 Returns the authenticated user's job list.
 
-#### `GET /api/jobs/:id`
+#### `GET /api/v1/jobs/:id`
+
 Returns a single job by ID.
 
-#### `PUT /api/jobs/:id`
+#### `PUT /api/v1/jobs/:id`
+
 Updates a job by ID.
 
-#### `DELETE /api/jobs/:id`
+#### `DELETE /api/v1/jobs/:id`
+
 Deletes a job by ID.
 
 ## Background Jobs
 
-When a job is created, the API schedules a follow-up email reminder through BullMQ. The worker is started from `src/index.ts`, so it runs alongside the server process.
+When a job is created, the API schedules a follow-up email reminder through BullMQ. The worker is started from `src/server.ts`, so it runs alongside the server process.
+
+## Testing
+
+Run the automated tests with:
+
+```bash
+npm test
+```
+
+The suite uses Jest with SWC and supports the ESM-style `.js` import paths used throughout the TypeScript source.
 
 ## Notes
 
