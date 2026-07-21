@@ -1,8 +1,9 @@
 import jwt from "jsonwebtoken";
-import type { Request, Response } from "express";
+import type { NextFunction, Request, Response } from "express";
 import { User } from "../models/user.model.js";
 import redisClient from "../config/redis.js";
 import type { AuthRequest } from "../middleware/auth.middleware.js";
+import { AppError } from "../middleware/error.middleware.js";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -16,17 +17,13 @@ function generateToken(userId: string, email: string): string {
 }
 
 // register endpoint
-export async function register(req: Request, res: Response): Promise<void> {
+export async function register(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
         const { name, email, password } = req.body;
 
         const existingUser = await User.findOne({ email });
         if(existingUser) {
-            res.status(400).json({
-                success: false,
-                message: "User already exists"
-            });
-            return;
+            throw new AppError("User already exists", 400);
         }
 
         const user = await User.create({ name, email, password });
@@ -43,33 +40,24 @@ export async function register(req: Request, res: Response): Promise<void> {
             }
         });
     } catch (error) {
-        console.error("Error during registration:", error);
-        res.status(500).json({ success: false, message: "Internal server error" });
+       next(error);
     }
 }
 
 
 // login endpoint
-export async function login(req: Request, res: Response): Promise<void> {
+export async function login(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
         const { email, password } = req.body;
 
         const user = await User.findOne({ email });
         if(!user) {
-            res.status(400).json({
-                success: false,
-                message: "Invalid Credentials"
-            });
-            return;
+            throw new AppError("Invalid Credentials", 400);
         }
 
         const isMatch = await user.comparePassword(password);
         if(!isMatch) {
-            res.status(400).json({
-                success: false,
-                message: "Invalid Credentials"
-            });
-            return;
+            throw new AppError("Invalid Credentials", 400);
         }
 
         const token = generateToken(user._id.toString(), user.email);
@@ -84,18 +72,16 @@ export async function login(req: Request, res: Response): Promise<void> {
             }
         });
     } catch (error) {
-        console.error("Error during login:", error);
-        res.status(500).json({ success: false, message: "Internal server error" });
+        next(error);
     }
 }
 
 // logout endpoint
-export async function logout(req: AuthRequest, res: Response): Promise<void> {
+export async function logout(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
         const token = req.headers.authorization?.split(" ")[1];
         if(!token) {
-            res.status(400).json({ success: false, message: "Token is required for logout." });
-            return;
+            throw new AppError("No token provided", 400);
         }
         await redisClient.setex(`blacklist:${token}`, BLACKLIST_TTL, "true");
         
@@ -104,7 +90,6 @@ export async function logout(req: AuthRequest, res: Response): Promise<void> {
             message: "Logout successfully"
         });
     } catch (error) {
-        console.error("Error during logout:", error);
-        res.status(500).json({ success: false, message: "Internal server error" });
+        next(error);
     }
 }
