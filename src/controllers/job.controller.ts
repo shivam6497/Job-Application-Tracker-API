@@ -7,19 +7,19 @@ import {
   invalidateJobCache,
   invalidateJobListCache,
 } from "../cache/job.cache.js";
-import type { Request, Response } from "express";
+import type { Request, Response, NextFunction } from "express";
 import { Job, type IJob } from "../models/job.model.js";
 import type { AuthRequest } from "../middleware/auth.middleware.js";
+import { AppError } from "../middleware/error.middleware.js";
 import { scheduleFollowUpEmail } from "../jobs/emailQueue.js";
 
-export async function setJob(req: AuthRequest, res: Response): Promise<void> {
+export async function setJob(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
   try {
     const { company, role, status, notes } = req.body;
     const userId = req.user?.userId;
 
     if (!userId) {
-      res.status(401).json({ success: false, message: "Unauthorized" });
-      return;
+      throw new AppError("Unauthorized", 401);
     }
 
     const jobData = {
@@ -46,19 +46,17 @@ export async function setJob(req: AuthRequest, res: Response): Promise<void> {
       job,
     });
   } catch (error) {
-    console.error("Error creating job:", error);
-    res.status(500).json({ success: false, message: "Internal server error" });
+    next(error);
   }
 }
 
-export async function getJob(req: AuthRequest, res: Response): Promise<void> {
+export async function getJob(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
   try {
     const jobId = req.params.id as string;
     const userId = req.user?.userId;
 
     if (!userId) {
-      res.status(401).json({ success: false, message: "Unauthorized" });
-      return;
+      throw new AppError("Unauthorized", 401);
     }
 
     const cachedJob = await getCachedJob(jobId);
@@ -73,11 +71,7 @@ export async function getJob(req: AuthRequest, res: Response): Promise<void> {
 
     const job = await Job.findOne({ _id: jobId, user: userId });
     if (!job) {
-      res.status(404).json({
-        success: false,
-        message: "Job not found",
-      });
-      return;
+      throw new AppError("Job not found", 404);
     }
     await setCachedJob(jobId, job);
     res.status(200).json({
@@ -86,14 +80,14 @@ export async function getJob(req: AuthRequest, res: Response): Promise<void> {
       job: job,
     });
   } catch (error) {
-    console.error("Error fetching job:", error);
-    res.status(500).json({ success: false, message: "Internal server error" });
+    next(error);
   }
 }
 
 export async function getJobList(
   req: AuthRequest,
   res: Response,
+  next: NextFunction
 ): Promise<void> {
   try {
     const userId = req.user?.userId as string;
@@ -101,8 +95,7 @@ export async function getJobList(
     const limit = parseInt(req.query.limit as string) || 10;
 
     if (!userId) {
-      res.status(401).json({ success: false, message: "Unauthorized" });
-      return;
+      throw new AppError("Unauthorized", 401);
     }
 
     const cachedJobList = await getCachedJobList(page, limit);
@@ -129,22 +122,21 @@ export async function getJobList(
       total: total,
     });
   } catch (error) {
-    console.error("Error fetching job list:", error);
-    res.status(500).json({ success: false, message: "Internal server error" });
+    next(error);
   }
 }
 
 export async function updateJob(
   req: AuthRequest,
   res: Response,
+  next: NextFunction
 ): Promise<void> {
   try {
     const jobId = req.params.id as string;
     const userId = req.user?.userId as string;
 
     if (!userId) {
-      res.status(401).json({ success: false, message: "Unauthorized" });
-      return;
+      throw new AppError("Unauthorized", 401);
     }
 
     const updateJob = await Job.findOneAndUpdate(
@@ -154,11 +146,7 @@ export async function updateJob(
     );
 
     if (!updateJob) {
-      res.status(404).json({
-        success: false,
-        message: "Job not found",
-      });
-      return;
+      throw new AppError("Job not found", 404);
     }
 
     await Promise.all([invalidateJobCache(jobId), invalidateJobListCache()]);
@@ -169,31 +157,26 @@ export async function updateJob(
       job: updateJob,
     });
   } catch (error) {
-    console.error("Error updating job:", error);
-    res.status(500).json({ success: false, message: "Internal server error" });
+    next(error);
   }
 }
 
 export async function deleteJob(
   req: AuthRequest,
   res: Response,
+  next: NextFunction
 ): Promise<void> {
   try {
     const jobId = req.params.id as string;
     const userId = req.user?.userId as string;
 
     if (!userId) {
-      res.status(401).json({ success: false, message: "Unauthorized" });
-      return;
+      throw new AppError("Unauthorized", 401);
     }
 
     const deleteJob = await Job.findOneAndDelete({ _id: jobId, user: userId });
     if (!deleteJob) {
-      res.status(404).json({
-        success: false,
-        message: "Job not found",
-      });
-      return;
+      throw new AppError("Job not found", 404);
     }
 
     await Promise.all([invalidateJobCache(jobId), invalidateJobListCache()]);
@@ -203,7 +186,6 @@ export async function deleteJob(
       message: "Job deleted successfully",
     });
   } catch (error) {
-    console.error("Error deleting job:", error);
-    res.status(500).json({ success: false, message: "Internal server error" });
+    next(error);
   }
 }
