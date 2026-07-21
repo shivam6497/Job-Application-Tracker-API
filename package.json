@@ -2,12 +2,41 @@
   "name": "job-applicaiton-tracker-api",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "tsc && node dist/index.js",
+    "test": "jest --forceExit",
+    "dev": "tsc && node dist/server.js",
     "build": "tsc",
-    "start": "node dist/index.js"
+    "start": "node dist/server.js"
+  },
+  "jest": {
+    "transform": {
+      "^.+\\.(t|j)s$": "@swc/jest"
+    },
+    "moduleNameMapper": {
+      "^(\\.{1,2}/.*)\\.js$": "$1"
+    },
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/*.test.ts"
+    ],
+    "moduleFileExtensions": [
+      "ts",
+      "js"
+    ],
+    "extensionsToTreatAsEsm": [
+      ".ts"
+    ],
+    "globals": {
+      "@swc/jest": {
+        "jsc": {
+          "target": "es2020"
+        },
+        "module": {
+          "type": "commonjs"
+        }
+      }
+    }
   },
   "keywords": [],
   "author": "",
@@ -27,5 +56,19 @@
     "resend": "^6.17.2",
     "typescript": "^7.0.2",
     "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@swc/core": "^1.15.46",
+    "@swc/jest": "^0.2.39",
+    "@types/jest": "^30.0.0",
+    "@types/supertest": "^7.2.1",
+    "jest": "^30.4.2",
+    "supertest": "^7.2.2"
+  },
+  "allowScripts": {
+    "@swc/core@1.15.46": true,
+    "bcrypt@6.0.0": true,
+    "msgpackr-extract@3.0.4": true,
+    "unrs-resolver@1.12.2": true
   }
 }
