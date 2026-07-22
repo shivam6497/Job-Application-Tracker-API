@@ -9,8 +9,8 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const JWT_SECRET = process.env.JWT_SECRET_KEY as string;
-const JWT_EXPIRES_IN = "24h";
-const BLACKLIST_TTL = 60 * 60 * 24;
+const JWT_EXPIRES_IN = "7d";
+const BLACKLIST_TTL = 60 * 60 * 24 * 7;
 
 function generateToken(userId: string, email: string): string {
     return jwt.sign({ userId, email }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
