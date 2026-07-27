@@ -48,6 +48,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "bcrypt": "^6.0.0",
     "bullmq": "^5.80.0",
+    "cookie-parser": "^1.4.7",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "ioredis": "^5.11.1",
@@ -60,6 +61,7 @@
   "devDependencies": {
     "@swc/core": "^1.15.46",
     "@swc/jest": "^0.2.39",
+    "@types/cookie-parser": "^1.4.10",
     "@types/jest": "^30.0.0",
     "@types/supertest": "^7.2.1",
     "jest": "^30.4.2",
