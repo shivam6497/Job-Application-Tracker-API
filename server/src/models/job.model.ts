@@ -3,7 +3,7 @@ import mongoose, { Schema, Document } from "mongoose";
 export interface IJob extends Document{
   company: string;
   role: string;
-  status: "interview" | "declined" | "pending";
+  status: "Applied"| "Interview"| "Offer"| "Rejected";
   appliedDate?: Date;
   notes?: string;
   user: mongoose.Types.ObjectId;
@@ -15,8 +15,8 @@ const jobSchema = new Schema<IJob>(
     role: { type: String, required: true, trim: true },
     status: {
       type: String,
-      enum: ["interview", "declined", "pending"],
-      default: "pending",
+      enum: ["Applied", "Interview", "Offer", "Rejected"],
+      default: "Applied",
     },
     appliedDate: { type: Date, default: Date.now },
     notes: { type: String, trim: true },
