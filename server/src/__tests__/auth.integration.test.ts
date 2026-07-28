@@ -25,7 +25,7 @@ afterAll(async () => {
 describe("POST /api/auth/register", () => {
   it("should return 400 if required fields are missing", async () => {
     const res = await request(app)
-      .post("/api/auth/register")
+      .post("/api/v1/auth/register")
       .send({});
 
     expect(res.status).toBe(400);
@@ -33,7 +33,7 @@ describe("POST /api/auth/register", () => {
 
   it("should return 400 if email is invalid", async () => {
     const res = await request(app)
-      .post("/api/auth/register")
+      .post("/api/v1/auth/register")
       .send({ email: "notanemail", password: "123456", name: "Test User" });
 
     expect(res.status).toBe(400);
@@ -41,7 +41,7 @@ describe("POST /api/auth/register", () => {
 
   it("should register a new user successfully", async () => {
     const res = await request(app)
-      .post("/api/auth/register")
+      .post("/api/v1/auth/register")
       .send({
         email: "testuser@test.com",
         password: "Test@1234",
@@ -54,7 +54,7 @@ describe("POST /api/auth/register", () => {
 
   it("should return 400 if user already exists", async () => {
     const res = await request(app)
-      .post("/api/auth/register")
+      .post("/api/v1/auth/register")
       .send({
         email: "testuser@test.com",
         password: "Test@1234",
