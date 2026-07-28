@@ -4,7 +4,8 @@ import {
     getJob,
     getJobList,
     updateJob,
-    deleteJob
+    deleteJob,
+    getJobStats
 } from "../controllers/job.controller.js";
 import { authMiddleware } from "../middleware/auth.middleware.js";
 import validate from "../middleware/validate.middleware.js";
@@ -16,6 +17,7 @@ router.use(authMiddleware);
 
 router.post("/", validate(createJobSchema), setJob);
 router.get("/", getJobList);
+router.get("/stats", getJobStats);
 router.get("/:id", getJob);
 router.put("/:id", validate(updateJobSchema), updateJob);
 router.delete("/:id", deleteJob);
