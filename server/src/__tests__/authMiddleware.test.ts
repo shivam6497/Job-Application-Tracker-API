@@ -22,6 +22,7 @@ function mockRequest(authHeader?: string): AuthRequest {
       authorization: authHeader,
     },
   } as AuthRequest;
+  
 }
 
 function mockResponse(): Response {
