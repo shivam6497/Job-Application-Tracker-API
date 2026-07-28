@@ -7,7 +7,7 @@ const TTL = {
 
 export const cacheKeys = {
     job: (id: string) => `job:${id}`,
-    jobList: (page: number, limit: number) => `job:list:${page}:${limit}`,
+    jobList: (page: number, limit: number, status: string) => `job:list:${page}:${limit}:${status ?? "all"}`,
     jobListPrefix: () => `job:list:*`,
 } as const;
 
@@ -30,9 +30,9 @@ export async function setCachedJob<T>(id: string, data: T): Promise<void> {
     }
 }
 
-export async function getCachedJobList<T>(page: number, limit: number): Promise<T | null> {
+export async function getCachedJobList<T>(page: number, limit: number, status: string): Promise<T | null> {
     try {
-        const cachedData = await redisClient.get(cacheKeys.jobList(page, limit));
+        const cachedData = await redisClient.get(cacheKeys.jobList(page, limit, status));
         if(!cachedData) return null;
         return JSON.parse(cachedData) as T;
     } catch (error) {
@@ -41,9 +41,9 @@ export async function getCachedJobList<T>(page: number, limit: number): Promise<
     }
 }
 
-export async function setCachedJobList<T>(page: number, limit: number, data: T): Promise<void> {
+export async function setCachedJobList<T>(page: number, limit: number, data: T, status: string): Promise<void> {
     try {
-        await redisClient.setex(cacheKeys.jobList(page, limit), TTL.JOB_LIST, JSON.stringify(data));
+        await redisClient.setex(cacheKeys.jobList(page, limit, status), TTL.JOB_LIST, JSON.stringify(data));
     } catch (error) {
         console.error(`Error setting cached job list with page ${page} and limit ${limit}:`, error);
     }
