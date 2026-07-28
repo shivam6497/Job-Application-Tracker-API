@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { Query } from "mongoose";
 import {
   getCachedJob,
   setCachedJob,
@@ -12,6 +12,7 @@ import { Job, type IJob } from "../models/job.model.js";
 import type { AuthRequest } from "../middleware/auth.middleware.js";
 import { AppError } from "../middleware/error.middleware.js";
 import { scheduleFollowUpEmail } from "../jobs/emailQueue.js";
+import { success } from "zod";
 
 export async function setJob(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
   try {
@@ -93,28 +94,40 @@ export async function getJobList(
     const userId = req.user?.userId as string;
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
+    const status = req.query.status as string | undefined;
 
     if (!userId) {
       throw new AppError("Unauthorized", 401);
     }
 
-    const cachedJobList = await getCachedJobList(page, limit);
+    const cachedJobList = await getCachedJobList(page, limit, status ?? "");
     if (cachedJobList) {
+      const filter: Record<string, any> = { user: userId };
+      if (status && ["Applied", "Interview", "Offer", "Rejected"].includes(status)) {
+        filter.status = status;
+      }
+      const total = await Job.countDocuments({ user: userId });
       res.status(200).json({
         success: true,
         source: "cache",
         jobs: cachedJobList,
+        total: total
       });
       return;
     }
 
+     const filter: Record<string, any> = { user: userId };
+    if (status && ["Applied", "Interview", "Offer", "Rejected"].includes(status)) {
+      filter.status = status;
+    }
+
     const skip = (page - 1) * limit;
     const [jobs, total] = await Promise.all([
-      Job.find({ user: userId }).skip(skip).limit(limit).lean(),
-      Job.countDocuments({ user: userId }),
+      Job.find(filter).skip(skip).limit(limit).lean(),
+      Job.countDocuments(filter),
     ]);
 
-    await setCachedJobList(page, limit, jobs);
+    await setCachedJobList(page, limit, jobs, status ?? "");
     res.status(200).json({
       success: true,
       source: "database",
@@ -187,5 +200,40 @@ export async function deleteJob(
     });
   } catch (error) {
     next(error);
+  }
+}
+
+export async function getJobStats(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const userId = req.user?.userId as string;
+
+    if(!userId) {
+      throw new AppError("Unauthorized", 401);
+    }
+
+    const stats = await Job.aggregate([
+      { $match: { user: new mongoose.Types.ObjectId(userId) } },
+      { $group: { _id: "$status", count: { $sum : 1 } } }
+    ]);
+
+    const result = {
+      Applied: 0,
+      Interview: 0,
+      Offer: 0,
+      Rejected: 0,
+    };
+
+    stats.forEach((s) => {
+      if(s._id in result) {
+        result[s._id as keyof typeof result] = s.count;
+      }
+    });
+
+    res.status(200).json({
+      success: true,
+      stats: result,
+    });
+  } catch (err) {
+    next(err);
   }
 }
