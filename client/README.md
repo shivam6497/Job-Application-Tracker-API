@@ -19,8 +19,6 @@ This is the frontend for the Job Application Tracker application built with Next
 <img width="1917" height="997" alt="Screenshot 2026-07-29 210243" src="https://github.com/user-attachments/assets/3d8b0342-1ab3-4ae6-a12b-b5bc2babde3e" />
 
 <img width="1917" height="992" alt="Screenshot 2026-07-29 210349" src="https://github.com/user-attachments/assets/f64bea19-2570-41ed-ad25-53990b37865d" />
-
-
 ## Tech Stack
 
 - Next.js
