@@ -12,21 +12,13 @@ This is the frontend for the Job Application Tracker application built with Next
 
 ## UI Preview
 
-```md
 ![Register Preview](./public/screenshots/register.png)
-```
 
-```md
 ![Dashboard Preview](./public/screenshots/dashboard.png)
-```
 
-```md
-![Add-Job Preview](./public/screenshots/add-application.png)
-```
+![Add-Job Preview](./public/screenshots/add-appilication.png)
 
-```md
 ![Edit-Job Preview](./public/screenshots/edit-application.png)
-```
 
 ## Tech Stack
 
