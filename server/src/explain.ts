@@ -1,4 +1,4 @@
-// src/explain.ts
+
 import mongoose from "mongoose";
 import { config } from "dotenv";
 config();
@@ -11,7 +11,7 @@ async function explain() {
 
   const result: any = await Job.find({ 
     user: new mongoose.Types.ObjectId("6a5675acca1286f020078d63"),
-    status: "pending" 
+    status: "Applied" 
   }).explain("executionStats");
 
   const indexes = await Job.collection.indexes();

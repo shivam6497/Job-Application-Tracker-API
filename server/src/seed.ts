@@ -1,4 +1,4 @@
-// src/seed.ts
+
 import mongoose from "mongoose";
 import { config } from "dotenv";
 config();
@@ -17,7 +17,7 @@ async function seed() {
       user: i % 100 === 0 ? TARGET_USER_ID : new mongoose.Types.ObjectId(),
       company: `Company ${i}`,
       role: `Engineer ${i}`,
-      status: i % 3 === 0 ? "pending" : i % 3 === 1 ? "interview" : "declined",
+      status: i % 3 === 0 ? "Applied" : i % 3 === 1 ? "Interview" : "Rejected",
     });
   }
 
