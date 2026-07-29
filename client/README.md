@@ -13,18 +13,20 @@ This is the frontend for the Job Application Tracker application built with Next
 ## UI Preview
 
 ```md
-![Register Preview](./public//screenshots/register.png)
+![Register Preview](./public/screenshots/register.png)
 ```
+
 ```md
 ![Dashboard Preview](./public/screenshots/dashboard.png)
 ```
+
 ```md
-![Add-Job Preview](./public/screenshots/add-appilication.png)
-``md
+![Add-Job Preview](./public/screenshots/add-application.png)
+```
 
 ```md
 ![Edit-Job Preview](./public/screenshots/edit-application.png)
-```md
+```
 
 ## Tech Stack
 
@@ -72,4 +74,3 @@ NEXT_PUBLIC_URL=http://localhost:5000
 - npm run build - create production build
 - npm run start - start production server
 - npm run lint - run ESLint
-
