@@ -16,7 +16,7 @@ import { success } from "zod";
 
 export async function setJob(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
   try {
-    const { company, role, status, notes } = req.body;
+    const { company, role, status, notes, appliedDate } = req.body;
     const userId = req.user?.userId;
 
     if (!userId) {
@@ -28,7 +28,7 @@ export async function setJob(req: AuthRequest, res: Response, next: NextFunction
       role,
       status,
       notes,
-      appliedDate: new Date(),
+      appliedDate: appliedDate ? new Date(appliedDate) : new Date(),
       user: new mongoose.Types.ObjectId(userId),
     };
 
