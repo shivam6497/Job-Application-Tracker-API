@@ -18,7 +18,7 @@ This is the frontend for the Job Application Tracker application built with Next
 
 ![Add-Job Preview](./public/screenshots/add-appilication.png)
 
-![Edit-Job Preview](./public/screenshots/edit-application.png)
+<img width="1917" height="996" alt="Screenshot 2026-07-29 210428" src="https://github.com/user-attachments/assets/e84a4b72-8db9-4c1a-9b5d-d9db54e10907" />
 
 ## Tech Stack
 
