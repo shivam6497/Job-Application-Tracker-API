@@ -5,6 +5,7 @@ export const createJobSchema = z.object({
     role: z.string().min(1, "Role is required"),
     status: z.enum(["Applied", "Interview", "Offer", "Rejected"]),
     notes: z.string().optional(),
+    appliedDate: z.string().optional(),
 });
 
 export const updateJobSchema = createJobSchema.partial();
