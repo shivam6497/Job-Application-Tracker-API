@@ -12,13 +12,14 @@ This is the frontend for the Job Application Tracker application built with Next
 
 ## UI Preview
 
-![Register Preview](./public/screenshots/register.png)
-
-![Dashboard Preview](./public/screenshots/dashboard.png)
-
-![Add-Job Preview](./public/screenshots/add-appilication.png)
-
 <img width="1917" height="996" alt="Screenshot 2026-07-29 210428" src="https://github.com/user-attachments/assets/e84a4b72-8db9-4c1a-9b5d-d9db54e10907" />
+
+<img width="1917" height="996" alt="Screenshot 2026-07-29 210113" src="https://github.com/user-attachments/assets/bd869c97-a76a-4353-a28b-e95f39dc791e" />
+
+<img width="1917" height="997" alt="Screenshot 2026-07-29 210243" src="https://github.com/user-attachments/assets/3d8b0342-1ab3-4ae6-a12b-b5bc2babde3e" />
+
+<img width="1917" height="992" alt="Screenshot 2026-07-29 210349" src="https://github.com/user-attachments/assets/f64bea19-2570-41ed-ad25-53990b37865d" />
+
 
 ## Tech Stack
 
