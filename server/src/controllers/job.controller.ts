@@ -101,7 +101,6 @@ export async function getJobList(
       throw new AppError("Unauthorized", 401);
     }
 
-    // build filter once — reuse everywhere
     const filter: Record<string, any> = { user: userId };
     if (status && ["Applied", "Interview", "Offer", "Rejected"].includes(status)) {
       filter.status = status;
