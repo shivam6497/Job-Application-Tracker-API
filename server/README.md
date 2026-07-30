@@ -1,15 +1,17 @@
 # Job Application Tracker API
 
-A TypeScript + Express API for tracking job applications, managing authentication, caching job data in Redis, and scheduling follow-up emails with BullMQ.
+This is the backend for the Job Application Tracker app. It is built with Express and TypeScript and provides authenticated job tracking, Redis caching, JWT refresh handling, and email reminder jobs.
 
 ## Features
 
-- User registration, login, and logout with JWT authentication
+- User registration, login, logout, and token refresh with JWT
 - Protected CRUD endpoints for job applications
-- Redis-backed caching for individual jobs and job lists
-- Redis token blacklist for logout
-- Rate limiting on auth endpoints
-- BullMQ job queue for follow-up email reminders
+- Job listing with pagination, filtering, and search support
+- Job statistics endpoint for dashboard summaries
+- Redis-backed caching for job details and job lists
+- Redis-based blacklist for revoked access/refresh tokens
+- Rate limiting on authentication routes
+- Background email reminder jobs using BullMQ
 - MongoDB persistence with Mongoose
 
 ## Tech Stack
@@ -22,14 +24,15 @@ A TypeScript + Express API for tracking job applications, managing authenticatio
 - BullMQ
 - JWT
 - Zod
-- Resend
+- CORS + cookie-parser
+- Jest + Supertest
 
 ## Prerequisites
 
-- Node.js installed
-- MongoDB running or a valid MongoDB Atlas connection string
+- Node.js 18+
+- MongoDB running locally or a valid MongoDB Atlas connection string
 - Redis running locally or remotely
-- A Resend API key for email delivery
+- A Resend API key if email delivery is enabled
 
 ## Installation
 
@@ -39,7 +42,7 @@ A TypeScript + Express API for tracking job applications, managing authenticatio
 npm install
 ```
 
-2. Create a `.env` file in the project root using `.env.example` as a guide.
+2. Create a `.env` file in the server root.
 
 3. Start the development server:
 
@@ -49,50 +52,53 @@ npm run dev
 
 ## Environment Variables
 
-Create a `.env` file with the following values:
+Example variables used by the server:
 
 ```env
-DATABASE_URL=
-REDIS_HOST=
-REDIS_PORT=
-JWT_SECRET_KEY=
-PORT=
-RESEND_API_KEY=
-RESEND_FROM=
+PORT=5000
+NODE_ENV=development
+CLIENT_URL=http://localhost:3000
+MONGO_URI=mongodb://127.0.0.1:27017/job-tracker
+JWT_SECRET_KEY=your-access-secret
+JWT_REFRESH_SECRET_KEY=your-refresh-secret
+REDIS_HOST=127.0.0.1
+REDIS_PORT=6379
+RESEND_API_KEY=your-resend-key
+RESEND_FROM=your-email
 ```
 
 ## Scripts
 
-- `npm run dev` - builds TypeScript and starts the server from `dist/server.js`
-- `npm run build` - compiles TypeScript to `dist`
-- `npm start` - runs the compiled server
+- `npm run dev` - compiles TypeScript and starts the server
+- `npm run build` - compiles the project to `dist`
+- `npm start` - runs the built server from `dist/server.js`
 - `npm test` - runs the Jest test suite
 
 ## Project Structure
 
 ```text
 src/
-  cache/
-  config/
-  controllers/
-  jobs/
-  middleware/
-  models/
-  routes/
-  validators/
-  index.ts
-  server.ts
+  cache/          # Redis cache helpers
+  config/         # DB, Redis, mailer configuration
+  controllers/    # Request handlers for auth and jobs
+  jobs/           # BullMQ worker and queue logic
+  middleware/     # Auth, validation, error, and rate limiting
+  models/         # Mongoose schemas/models
+  routes/         # Express route definitions
+  validators/     # Zod validation schemas
+  index.ts        # Express app setup
+  server.ts       # Server bootstrap
 ```
 
 ## API Overview
 
 Base URL: `/api/v1`
 
-### Auth Routes
+### Authentication
 
 #### `POST /api/v1/auth/register`
 
-Registers a new user.
+Creates a new user account and returns an access token plus user details.
 
 Request body:
 
@@ -104,39 +110,25 @@ Request body:
 }
 ```
 
-Response:
-
-- Returns a JWT token
-- Returns the created user details
-
 #### `POST /api/v1/auth/login`
 
-Logs in an existing user.
+Authenticates a user and returns a new access token.
 
-Request body:
+#### `POST /api/v1/auth/refresh`
 
-```json
-{
-  "email": "user@example.com",
-  "password": "password123"
-}
-```
+Refreshes the access token using the HTTP-only refresh cookie.
 
 #### `POST /api/v1/auth/logout`
 
-Logs out the current user by blacklisting the token.
+Logs the user out and blacklists the active tokens in Redis.
 
-Requires:
-
-- `Authorization: Bearer <token>`
-
-### Job Routes
+### Jobs
 
 All job routes require authentication.
 
 #### `POST /api/v1/jobs`
 
-Creates a new job application.
+Create a new job application.
 
 Request body:
 
@@ -144,50 +136,64 @@ Request body:
 {
   "company": "Google",
   "role": "Frontend Developer",
-  "status": "interview",
-  "notes": "Applied through referral"
+  "status": "Applied",
+  "notes": "Applied through referral",
+  "appliedDate": "2026-07-30"
 }
 ```
 
-Valid `status` values:
+Valid statuses:
 
-- `pending`
-- `interview`
-- `declined`
+- `Applied`
+- `Interview`
+- `Offer`
+- `Rejected`
 
 #### `GET /api/v1/jobs?page=1&limit=10`
 
-Returns the authenticated user's job list.
+Get paginated jobs for the authenticated user.
+
+#### `GET /api/v1/jobs/stats`
+
+Get job counts grouped by status.
 
 #### `GET /api/v1/jobs/:id`
 
-Returns a single job by ID.
+Get one job by ID.
 
 #### `PUT /api/v1/jobs/:id`
 
-Updates a job by ID.
+Update one job by ID.
 
 #### `DELETE /api/v1/jobs/:id`
 
-Deletes a job by ID.
+Delete one job by ID.
 
-## Background Jobs
+## Health Check
 
-When a job is created, the API schedules a follow-up email reminder through BullMQ. The worker is started from `src/server.ts`, so it runs alongside the server process.
+```bash
+curl http://localhost:5000/health
+```
+
+Expected response:
+
+```json
+{
+  "status": "ok"
+}
+```
 
 ## Testing
 
-Run the automated tests with:
+Run the test suite:
 
 ```bash
 npm test
 ```
 
-The suite uses Jest with SWC and supports the ESM-style `.js` import paths used throughout the TypeScript source.
-
 ## Notes
 
-- Auth routes use rate limiting.
-- Job lists and individual jobs are cached in Redis.
-- Logout blacklists the JWT token in Redis.
-- Make sure the environment variables are set before starting the server.
+- Authentication uses rate limiting on login/register routes.
+- Job data is cached in Redis for faster reads.
+- Logout revokes tokens by storing them in Redis.
+- The server also starts a BullMQ worker for follow-up email jobs.
