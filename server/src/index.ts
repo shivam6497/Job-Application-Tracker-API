@@ -21,6 +21,9 @@ app.use(cookieParser());
 
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/jobs", jobRoutes);
+app.get("/health", (req, res) => {
+    res.status(200).json({ status: "ok" });
+})
 app.use(errorHandler);
 
 export default app;
