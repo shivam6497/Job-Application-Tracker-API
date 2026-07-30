@@ -95,30 +95,34 @@ export async function getJobList(
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
     const status = req.query.status as string | undefined;
+    const search = req.query.search as string | undefined;
 
     if (!userId) {
       throw new AppError("Unauthorized", 401);
     }
 
-    const cachedJobList = await getCachedJobList(page, limit, status ?? "");
+    // build filter once — reuse everywhere
+    const filter: Record<string, any> = { user: userId };
+    if (status && ["Applied", "Interview", "Offer", "Rejected"].includes(status)) {
+      filter.status = status;
+    }
+    if (search && search.trim() !== "") {
+      filter.$or = [
+        { company: { $regex: search.trim(), $options: "i" } },
+        { role: { $regex: search.trim(), $options: "i" } },
+      ];
+    }
+
+    const cachedJobList = await getCachedJobList(page, limit, status ?? "all", search ?? "");
     if (cachedJobList) {
-      const filter: Record<string, any> = { user: userId };
-      if (status && ["Applied", "Interview", "Offer", "Rejected"].includes(status)) {
-        filter.status = status;
-      }
-      const total = await Job.countDocuments({ user: userId });
+      const total = await Job.countDocuments(filter);
       res.status(200).json({
         success: true,
         source: "cache",
         jobs: cachedJobList,
-        total: total
+        total,
       });
       return;
-    }
-
-     const filter: Record<string, any> = { user: userId };
-    if (status && ["Applied", "Interview", "Offer", "Rejected"].includes(status)) {
-      filter.status = status;
     }
 
     const skip = (page - 1) * limit;
@@ -127,18 +131,17 @@ export async function getJobList(
       Job.countDocuments(filter),
     ]);
 
-    await setCachedJobList(page, limit, jobs, status ?? "");
+    await setCachedJobList(page, limit, jobs, status ?? "all", search ?? "");
     res.status(200).json({
       success: true,
       source: "database",
-      jobs: jobs,
-      total: total,
+      jobs,
+      total,
     });
   } catch (error) {
     next(error);
   }
 }
-
 export async function updateJob(
   req: AuthRequest,
   res: Response,
