@@ -49,8 +49,8 @@ export async function register(
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "development",
-      sameSite: process.env.NODE_ENV === "development" ? "none" : "strict",
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
       maxAge: REFRESH_TTL * 1000,
     });
 
@@ -93,8 +93,8 @@ export async function login(
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "development",
-      sameSite: process.env.NODE_ENV === "development" ? "none" : "strict",
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
       maxAge: REFRESH_TTL * 1000,
     });
 
@@ -175,8 +175,8 @@ export async function logout(
 
     res.clearCookie("refreshToken", {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "development",
-      sameSite: process.env.NODE_ENV === "development" ? "none" : "strict",
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
     });
 
     res.status(200).json({
